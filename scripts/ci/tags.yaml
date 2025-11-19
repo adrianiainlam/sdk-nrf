@@ -154,6 +154,7 @@ ci_samples_wifi:
     - nrf/subsys/net/lib/hostap_crypto/
     - nrf/subsys/net/lib/nrf70_fw_ext/
     - nrf/subsys/net/openthread/
+    - nrf/subsys/nrf_security/
     - nrfxlib/nrf_wifi/
     - zephyr/drivers/wifi/
     - zephyr/modules/hostap/
@@ -1243,6 +1244,7 @@ ci_tests_benchmarks_current_consumption:
     - nrf/include/nfc/
     - nrf/subsys/nfc/
     - nrf/tests/benchmarks/current_consumption/
+    - nrf/tests/benchmarks/pm_states/
     - nrf/tests/benchmarks/power_consumption/
     - nrfxlib/nfc/
     - zephyr/boards/nordic/

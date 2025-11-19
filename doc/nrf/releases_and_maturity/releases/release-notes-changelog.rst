@@ -163,6 +163,9 @@ Trusted Firmware-M
     nRF54L05 does not support TF-M.
     nRF54L10 supports TF-M experimentally.
 
+* Removed several documentation pages from the :ref:`tfm_wrapper` section that were misleading or not relevant for understanding the TF-M integration in the |NCS|.
+  The section now includes only pages that provide background information about TF-M design that are relevant for the |NCS|.
+
 Protocols
 =========
 
@@ -393,7 +396,7 @@ Bluetooth Mesh samples
 
 * Added:
 
-  * Support for external flash settings for the ``nrf52840dk/nrf52840`` board targets in all Bluetooth Mesh samples.
+  * Support for external flash settings for the ``nrf52840dk/nrf52840``, ``nrf54l15dk/nrf54l15/cpuapp``, ``nrf54l15dk/nrf54l10/cpuapp``, and ``nrf54l15dk/nrf54l05/cpuapp`` board targets in all Bluetooth Mesh samples.
   * Support for the ``nrf54lm20dk/nrf54lm20a/cpuapp`` board target in all Bluetooth Mesh samples.
 
 * :ref:`ble_mesh_dfu_distributor` sample:
@@ -401,20 +404,12 @@ Bluetooth Mesh samples
    * Added:
 
     * Support for external flash memory for the ``nrf52840dk/nrf52840`` and the ``nrf54l15dk/nrf54l15/cpuapp`` as the secondary partition for the DFU process.
-    * Support for external flash settings for the ``nrf52840dk/nrf52840`` board targets.
-
-  * Updated the :makevar:`FILE_SUFFIX` make variable to use more descriptive suffixes for external flash configurations.
-    The new suffixes are ``_dfu_ext_flash`` for external flash DFU storage and ``_ext_flash_settings`` for external flash settings storage.
 
 * :ref:`ble_mesh_dfu_target` sample:
 
   * Added:
 
     * Support for external flash memory for the ``nrf52840dk/nrf52840`` and the ``nrf54l15dk/nrf54l15/cpuapp`` as the secondary partition for the DFU process.
-    * Support for external flash settings for the ``nrf52840dk/nrf52840`` board targets.
-
-  * Updated the :makevar:`FILE_SUFFIX` make variable to use more descriptive suffixes for external flash configurations.
-    The new suffixes are ``_dfu_ext_flash`` for external flash DFU storage and ``_ext_flash_settings`` for external flash settings storage.
 
 * :ref:`bluetooth_mesh_sensor_client` sample:
 
