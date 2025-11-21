@@ -184,7 +184,7 @@ static void wifi_setup(void)
 #endif /* CONFIG_SOC_NRF7120_HAS_AMBIX03 */
 
 	/* Make GRTC accessible from the WIFI-Core */
-	spu_peripheral_config_non_secure(NRF_GRTC_S_BASE, true);
+	// spu_peripheral_config_non_secure(NRF_GRTC_S_BASE, true);
 
 	/* EMU platform uses UART 20 for the Wi-Fi console */
 #ifdef CONFIG_BOARD_NRF7120PDK_NRF7120_CPUAPP_EMU
@@ -205,11 +205,26 @@ static void wifi_setup(void)
 	nrf_spu_feature_secattr_set(NRF_SPU20, NRF_SPU_FEATURE_GRTC_INTERRUPT, 5, 0, 0);
 	nrf_spu_feature_secattr_set(NRF_SPU20, NRF_SPU_FEATURE_GRTC_SYSCOUNTER, 0, 0, 0);
 
+	uint32_t lmacInitPc = 0x002e4000;
+	uint32_t lmacPatchStart = 0x002e0000;
+	uint32_t umacInitPc = 0x28180000;
+	uint32_t umacPatchStart = 0x002f0000;
+
+	// Initialise WICR
+	NRF_MRAMC->CONFIGNVR.PAGE[0] = 0xFFF00020;
+	*(volatile uint32_t *)0x003FD000 = 0xFFFFFFFF;
+	NRF_MRAMC->CONFIGNVR.PAGE[0] = 0xFFF00001;
+
+	*(volatile uint32_t *)0x003FD000 = lmacInitPc;
+	*(volatile uint32_t *)0x003FD004 = umacInitPc;
+	*(volatile uint32_t *)0x003FD008 = lmacPatchStart;
+	*(volatile uint32_t *)0x003FD00C = umacPatchStart;
+
 	/* Kickstart the LMAC processor */
 	NRF_WIFICORE_LRCCONF_LRC0->POWERON =
 		(LRCCONF_POWERON_MAIN_AlwaysOn << LRCCONF_POWERON_MAIN_Pos);
 	NRF_WIFICORE_LMAC_VPR->INITPC = NRF_WICR->RESERVED[0];
-	NRF_WIFICORE_LMAC_VPR->CPURUN = (VPR_CPURUN_EN_Running << VPR_CPURUN_EN_Pos);
+	// NRF_WIFICORE_LMAC_VPR->CPURUN = (VPR_CPURUN_EN_Running << VPR_CPURUN_EN_Pos);
 }
 
 void soc_early_init_hook(void)
