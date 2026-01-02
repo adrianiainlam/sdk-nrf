@@ -482,7 +482,7 @@ psa_driver_wrapper_get_key_buffer_size_from_key_data(const psa_key_attributes_t 
 	*key_buffer_size = 0;
 	switch (location) {
 	case PSA_KEY_LOCATION_WIFI_KEYS:
-		*key_buffer_size = 32; // ?? max key size in bytes
+		*key_buffer_size = 32; /* max key size in bytes */
 		return PSA_SUCCESS;
 #if defined(PSA_CRYPTO_DRIVER_CRACEN)
 	case PSA_KEY_LOCATION_CRACEN:

@@ -33,11 +33,7 @@ static int wifi_keys_set_key_id(psa_key_attributes_t *attr, uint32_t db_id, uint
 		return 1;
 	}
 
-	/* Arbitrary key ID scheme. Can be changed if necessary.
-	 * Note that if we need to change to a "builtin key" (not sure what that means)
-	 * then we need to implement a wifi_keys_destroy_key function,
-	 * and extend psa_crypto_driver_wrappers.c psa_driver_wrapper_destroy_builtin_key
-	 * to call it. */
+	/* Arbitrary key ID scheme - non-builtin key. */
 	psa_key_id_t id = 0x3F000000 | ('W' << 16) | ('C' << 8) | (db_id << 2) | (key_index);
 	psa_set_key_id(attr, id);
 	return 0;
@@ -64,14 +60,14 @@ static uint32_t wifi_keys_get_key_start_addr(wifi_keys_key_type_t type, uint32_t
 		} else {
 			offset = 0x40 + key_index * 0x20;
 		}
-	} else { /* PEER_* */
+	} else { /* PEER */
 		if (db_id >= 8) {
 			return WIFI_KEYS_KEY_INDEX_INVALID;
 		}
 		db_base = db_id * 0xF0;
 		if (type == PEER_UCST_ENC || type == PEER_UCST_MIC) {
 			offset = mic ? 0x0 : 0x10;
-		} else { /* PEER_BCST_* */
+		} else { /* PEER_BCST */
 			if (key_index >= 4) {
 				return WIFI_KEYS_KEY_INDEX_INVALID;
 			}
@@ -181,9 +177,8 @@ psa_status_t wifi_keys_import_key(const psa_key_attributes_t *attr, const uint8_
 			return PSA_ERROR_INVALID_ARGUMENT;
 		}
 
-		/* I don't understand the purpose of these output paramenters.
-		 * Setting them to arbitrary values for now. */
-		*key_buffer_length = 32;
+		/* Output parameters not used, set to arbitrary values. */
+		*key_buffer_length = 32; /* max key size in bytes */
 		*key_bits = wifi_keys_get_key_size_in_bits(type);
 		memset(key_buffer, 0, *key_buffer_length);
 
