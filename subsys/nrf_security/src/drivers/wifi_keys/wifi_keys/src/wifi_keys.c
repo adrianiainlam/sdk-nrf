@@ -1,3 +1,6 @@
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(wifi_keys, CONFIG_WIFI_KEYS_LOG_LEVEL);
+
 #include <stdint.h>
 #include <cracen/lib_kmu.h>
 #include "nrf.h"
@@ -27,9 +30,11 @@ static uint32_t wifi_keys_kmu_slot_id(wifi_keys_key_type_t type, uint32_t db_id,
 static int wifi_keys_set_key_id(psa_key_attributes_t *attr, uint32_t db_id, uint32_t key_index)
 {
 	if (db_id >= 8) {
+		LOG_ERR("Invalid db_id: %d", db_id);
 		return 1;
 	}
 	if (key_index >= 4) {
+		LOG_ERR("Invalid key_index: %d", key_index);
 		return 1;
 	}
 
@@ -100,15 +105,19 @@ static int wifi_keys_kmu_provision_and_push(const uint32_t *key, wifi_keys_key_t
 	src.rpolicy = LIB_KMU_REV_POLICY_ROTATING;
 	src.dest = wifi_keys_get_key_start_addr(type, db_id, key_index);
 	if (src.dest == WIFI_KEYS_KEY_INDEX_INVALID) {
+		LOG_ERR("Invalid destination address (db_id: %d, key_index: %d)", db_id, key_index);
 		return 1;
 	}
 	src.metadata = 0;
 	int ret = lib_kmu_provision_slot(key_slot, &src);
 	if (ret) {
+		LOG_ERR("Failed to provision key (db_id: %d, key_index: %d): %d", db_id, key_index,
+			ret);
 		return ret;
 	}
 	ret = lib_kmu_push_slot(key_slot);
 	if (ret) {
+		LOG_ERR("Failed to push key (db_id: %d, key_index: %d): %d", db_id, key_index, ret);
 		return ret;
 	}
 
@@ -159,13 +168,17 @@ psa_status_t wifi_keys_import_key(const psa_key_attributes_t *attr, const uint8_
 	__ASSERT_NO_MSG(key_bits);
 
 	if (key_buffer_size == 0) {
+		LOG_ERR("Invalid key buffer size: %d", key_buffer_size);
 		return PSA_ERROR_INVALID_ARGUMENT;
 	}
 
 	psa_key_lifetime_t lifetime = psa_get_key_lifetime(attr);
 	psa_key_location_t location = PSA_KEY_LIFETIME_GET_LOCATION(lifetime);
 	psa_key_persistence_t persistence = PSA_KEY_LIFETIME_GET_PERSISTENCE(lifetime);
+	mbedtls_svc_key_id_t key = psa_get_key_id(attr);
 
+	LOG_INF("Importing key to PSA, location: %d, persistence: %d, lifetime: %d key: 0x%08X",
+		location, persistence, lifetime, key);
 	if (location == PSA_KEY_LOCATION_WIFI_KEYS) {
 		wifi_keys_key_type_t type = (wifi_keys_key_type_t)psa_get_key_type(attr);
 		psa_key_id_t id = psa_get_key_id(attr);
@@ -173,7 +186,11 @@ psa_status_t wifi_keys_import_key(const psa_key_attributes_t *attr, const uint8_
 		uint32_t db_id = (id >> 2) & 0x7;
 		uint32_t key_index = id & 0x3;
 
+		LOG_INF("Key ID: %d, DB ID: %d, Key Index: %d", id, db_id, key_index);
+
 		if (data_length != wifi_keys_get_key_size_in_bytes(type)) {
+			LOG_ERR("Invalid key data length: %d, expected: %d", data_length,
+				wifi_keys_get_key_size_in_bytes(type));
 			return PSA_ERROR_INVALID_ARGUMENT;
 		}
 
@@ -184,9 +201,14 @@ psa_status_t wifi_keys_import_key(const psa_key_attributes_t *attr, const uint8_
 
 		if (persistence == PSA_KEY_PERSISTENCE_DEFAULT) {
 			uint32_t key_slot = wifi_keys_kmu_slot_id(type, db_id, key_index);
-			return wifi_keys_kmu_provision_and_push((const uint32_t *)data, type, db_id,
-								key_index, key_slot);
+			int ret = wifi_keys_kmu_provision_and_push((const uint32_t *)data, type,
+								   db_id, key_index, key_slot);
+			if (ret) {
+				LOG_ERR("Failed to provision and push key: %d", ret);
+			}
+			return ret;
 		} else {
+			LOG_ERR("Invalid persistence: %d", persistence);
 			return PSA_ERROR_INVALID_ARGUMENT;
 		}
 	}
