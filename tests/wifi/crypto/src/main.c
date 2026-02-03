@@ -26,17 +26,27 @@ ZTEST(wifi_crypto, test_main)
 	uint32_t ccmp256_key[8] = {0x0C0D0E0F, 0x08090A0B, 0x04050607, 0x00010203,
 				   0xF2BDD52F, 0x514A8A19, 0xCE371185, 0xC97C1F67};
 
-	wifi_keys_key_type_t type = PEER_UCST_ENC;
-	psa_key_attributes_t attr = wifi_keys_key_attributes_init(type, 0, 0);
+	wifi_keys_type_t type = PEER_UCST_ENC;
+	uint32_t db_id = 0;
+	uint32_t key_index = 0;
 	uint32_t key_length = wifi_keys_get_key_size_in_bytes(type);
-	psa_key_id_t key_id;
 
+	wifi_keys_buffer_t keybuf;
+
+	keybuf.dst_addr = wifi_keys_get_key_start_addr(type, db_id, key_index);
+	memcpy(keybuf.key_buffer, ccmp256_key, key_length);
+	keybuf.key_size_bytes = key_length;
+
+	zassert_not_equal(keybuf.dst_addr, WIFI_KEYS_ADDR_INVALID);
+
+	psa_key_attributes_t attr = wifi_keys_key_attributes_init();
+	psa_key_id_t key_id;
 	psa_status_t status;
 
 	status = psa_crypto_init();
 	zassert_equal(status, PSA_SUCCESS);
 
-	status = psa_import_key(&attr, (const uint8_t *)ccmp256_key, key_length, &key_id);
+	status = psa_import_key(&attr, (const uint8_t *)&keybuf, key_length, &key_id);
 	zassert_equal(status, PSA_SUCCESS);
 
 	*(volatile uint32_t *)0x48086C04 = 1; /* NRF_WIFICORE_RPUSYS->EDCPERIP.EDCGPIO1OUT */
@@ -64,12 +74,20 @@ ZTEST(wifi_crypto, test_psa_import_key_failure_exact_params)
 	uint32_t ccmp256_key[8] = {0x0C0D0E0F, 0x08090A0B, 0x04050607, 0x00010203,
 				   0xF2BDD52F, 0x514A8A19, 0xCE371185, 0xC97C1F67};
 
-	const wifi_keys_key_type_t type = PEER_UCST_ENC;
+	const wifi_keys_type_t type = PEER_UCST_ENC;
 	const uint32_t db_id = 1;
 	const uint32_t key_idx = 1;
-
-	psa_key_attributes_t attr = wifi_keys_key_attributes_init(type, db_id, key_idx);
 	uint32_t key_length = wifi_keys_get_key_size_in_bytes(type);
+
+	wifi_keys_buffer_t keybuf;
+
+	keybuf.dst_addr = wifi_keys_get_key_start_addr(type, db_id, key_idx);
+	memcpy(keybuf.key_buffer, ccmp256_key, key_length);
+	keybuf.key_size_bytes = key_length;
+
+	zassert_not_equal(keybuf.dst_addr, WIFI_KEYS_ADDR_INVALID);
+
+	psa_key_attributes_t attr = wifi_keys_key_attributes_init();
 	psa_key_id_t key_id;
 	psa_status_t status;
 
@@ -104,7 +122,7 @@ ZTEST(wifi_crypto, test_psa_import_key_failure_exact_params)
 	LOG_INF("PSA crypto initialized: %d", status);
 	zassert_equal(status, PSA_SUCCESS, "Crypto init failed");
 
-	status = psa_import_key(&attr, (const uint8_t *)ccmp256_key, key_length, &key_id);
+	status = psa_import_key(&attr, (const uint8_t *)&keybuf, key_length, &key_id);
 	LOG_INF("psa_import_key returned: %d", status);
 
 	/* Exactly as in the log trace, expect -135 (PSA_ERROR_INVALID_HANDLE or similar) or

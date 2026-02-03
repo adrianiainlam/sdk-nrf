@@ -112,7 +112,7 @@
 #endif /* PSA_CRYPTO_DRIVER_CRACEN */
 
 #if defined(PSA_CRYPTO_DRIVER_WIFI_KEYS)
-#include "wifi_keys.h"
+#include "wifi_keys_psa.h"
 #endif /* PSA_CRYPTO_DRIVER_WIFI_KEYS */
 
 /* Include TF-M builtin key driver */
