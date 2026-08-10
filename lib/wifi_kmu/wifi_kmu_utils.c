@@ -13,6 +13,7 @@
 /* Wi-Fi Keys sizes */
 static const uint32_t mic_key_len = 0x10;
 static const uint32_t enc_key_len = 0x20;
+static const uint32_t secure_ltf_key_len = 0x10;
 
 /* Wi-Fi Keys RAM structure */
 static const uint32_t ram_base = 0x28400000;
@@ -39,6 +40,11 @@ static const uint32_t peer_bcst_size_per_entry =
 static const uint32_t peer_db_size_per_entry = peer_ucst_size_per_entry + peer_bcst_size_per_entry;
 static const uint32_t num_peer_entries = 8;
 
+#if defined(CONFIG_SOC_NRF7110)
+/* Secure LTF AES keys */
+static const uint32_t secure_aes_keys_base = 0x840;
+#endif
+
 static bool key_is_mic(wifi_kmu_key_type_t type)
 {
 	return type == PEER_UCST_MIC || type == PEER_BCST_MIC || type == VIF_MIC;
@@ -50,7 +56,21 @@ uint32_t wifi_kmu_get_key_start_addr(wifi_kmu_key_type_t type, uint32_t db_id, u
 	uint32_t offset;
 	bool mic = key_is_mic(type);
 
-	if (type == VIF_ENC || type == VIF_MIC) {
+	if (type == SECURE_LTF_AES_KEYS) {
+#if defined(CONFIG_SOC_NRF7110)
+		if (db_id > 0) {
+			return wifi_kmu_key_addr_invalid;
+		}
+		if (key_index > 1) {
+			return wifi_kmu_key_addr_invalid;
+		}
+		db_base = secure_aes_keys_base;
+		offset = key_index * secure_ltf_key_len;
+#else
+		/* Secure LTF not supported */
+		return wifi_kmu_key_addr_invalid;
+#endif
+	} else if (type == VIF_ENC || type == VIF_MIC) {
 		if (db_id >= num_vif_entries) {
 			return wifi_kmu_key_addr_invalid;
 		}
@@ -88,7 +108,11 @@ uint32_t wifi_kmu_get_key_start_addr(wifi_kmu_key_type_t type, uint32_t db_id, u
 
 uint32_t wifi_kmu_get_key_size_in_bytes(wifi_kmu_key_type_t type)
 {
-	return key_is_mic(type) ? mic_key_len : enc_key_len;
+	if (type == SECURE_LTF_AES_KEYS) {
+		return secure_ltf_key_len;
+	} else {
+		return key_is_mic(type) ? mic_key_len : enc_key_len;
+	}
 }
 
 uint32_t wifi_kmu_get_key_size_in_bits(wifi_kmu_key_type_t type)

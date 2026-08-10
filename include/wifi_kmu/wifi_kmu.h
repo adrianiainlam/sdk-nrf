@@ -73,7 +73,9 @@ typedef enum {
 	/** Virtual interface encryption key */
 	VIF_ENC,
 	/** Virtual interface message integrity code key */
-	VIF_MIC
+	VIF_MIC,
+	/** AES keys used for 802.11az secure HE-LTFs */
+	SECURE_LTF_AES_KEYS
 } wifi_kmu_key_type_t;
 
 /**
